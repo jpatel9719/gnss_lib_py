@@ -14,6 +14,9 @@ from gnss_lib_py.navdata.navdata import NavData
 from gnss_lib_py.utils.time_conversions import gps_datetime_to_gps_millis, datetime_to_mjd
 from gnss_lib_py.utils import time_conversions
 
+from bokeh.plotting import figure, show
+from bokeh.models import ColumnDataSource
+
 class Tropo(NavData):
     """
     Tropospheric delay loading
@@ -131,6 +134,33 @@ if __name__ == "__main__":
     modeled_T = result.zenith_total_delay_m
 
     residual_GPT2w = tropo_data["ztd_m"] - modeled_T
+
+    # Create figure
+    p = figure(
+        width=1000,
+        height=700,
+        title="Residual of GPT2w modeled zenith Tropospheric delay",
+        x_axis_label="GPS  [s]",
+        y_axis_label="Residuals [m]",
+        tools="pan,wheel_zoom,box_zoom,reset,save"
+    )
+
+    # Create data source for GNSS
+    gnss_source = ColumnDataSource(data=dict(
+        x=tropo_data[0],
+        y=residual_GPT2w,
+    ))
+    # Plot residuals
+    gnss_line = p.line('x', 'y', source=gnss_source,
+                       line_width=2, color='blue', alpha=0.6,
+                       legend_label='Residuals')
+    gnss_points = p.scatter('x', 'y', source=gnss_source,
+                           size=6, marker="circle", color='blue', alpha=0.8)
+
+    # Configure legend
+    p.legend.location = "top_right"
+    p.legend.click_policy = "hide"
+    show(p)
 
     print("="*60)
     print(f"{' '*18} End of Tropo Analysis {' '*18}")
