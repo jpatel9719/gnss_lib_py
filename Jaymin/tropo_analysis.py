@@ -31,6 +31,8 @@ class Tropo(NavData):
         self.station_id = str()
         self.station_lla = np.zeros(3, dtype=np.float64)
         gps_millis = []
+        gps_weeks = []
+        gps_tows = []
         ztd_m = []          # Zenith Troposheric Delay [m]
 
         for input_path in input_paths:
@@ -67,9 +69,12 @@ class Tropo(NavData):
                         while True:
                             data = line.strip().split()
                             curr_time = self._parse_yds_time(data[1])
-                            gps_millis_timestep = gps_datetime_to_gps_millis(curr_time)
+                            gps_millis_timestep = time_conversions.gps_datetime_to_gps_millis(curr_time)
+                            week, tow = time_conversions.datetime_to_tow(curr_time)
 
                             gps_millis.append(gps_millis_timestep)
+                            gps_weeks.append(week)
+                            gps_tows.append(tow)
                             ztd_m.append(float(data[2])/1000)           # mm to meter
                             line = next(infile)         # read next line
                             if "-TROP/SOLUTION" in line:
@@ -77,6 +82,8 @@ class Tropo(NavData):
 
         self["gps_millis"] = gps_millis
         self["ztd_m"] = ztd_m
+        self["gps_tow"] = gps_tows
+        self["gps_week"] = gps_weeks
 
     @staticmethod
     def _parse_yds_time(time_str):
@@ -140,14 +147,14 @@ if __name__ == "__main__":
         width=1000,
         height=700,
         title="Residual of GPT2w modeled zenith Tropospheric delay",
-        x_axis_label="GPS  [s]",
+        x_axis_label="GPS ToW  [s]",
         y_axis_label="Residuals [m]",
         tools="pan,wheel_zoom,box_zoom,reset,save"
     )
 
     # Create data source for GNSS
     gnss_source = ColumnDataSource(data=dict(
-        x=tropo_data[0],
+        x=tropo_data["gps_tow"],
         y=residual_GPT2w,
     ))
     # Plot residuals
