@@ -188,23 +188,21 @@ def datetime_to_mjd(t_datetimes):
         `dtype = float`.
 
     """
-    if isinstance(t_datetimes,datetime):
-        t_datetimes = [t_datetimes]
-    if isinstance(t_datetimes,np.ndarray) \
-        and len(np.atleast_1d(t_datetimes)) == 1:
-        t_datetimes = [t_datetimes.item()]
+    MJD_OFFSET = 2400000.5
+    JD_OFFSET = 1721424.5
 
-    mjd = []
+    # Normalize input to 1D numpy array
+    t_arr = np.atleast_1d(t_datetimes)
 
-    for t_datetime in t_datetimes:
-        t_datetime = tzinfo_to_utc(t_datetime)
+    # Ensure UTC (vectorized)
+    t_arr = np.array([tzinfo_to_utc(t) for t in t_arr], dtype=object)
 
-        jd = t_datetime.toordinal() + 1721424.5
-        modified_julian_day = jd - 2400000.5
-        mjd.append(modified_julian_day)
+    # Vectorized conversion
+    ordinal = np.array([t.toordinal() for t in t_arr], dtype=float)
+    mjd = ordinal + JD_OFFSET - MJD_OFFSET
 
-    mjd = np.squeeze(np.array(mjd))
-    return mjd
+    # Return scalar if input was scalar
+    return mjd[0] if np.isscalar(t_datetimes) else mjd
 
 def tow_to_datetime(gps_weeks, tows):
     """Convert GPS week and time of week (seconds) to datetime.
