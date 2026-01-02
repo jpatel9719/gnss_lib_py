@@ -8,8 +8,11 @@ from datetime import datetime, timezone, timedelta
 import numpy as np
 from pathlib import Path
 
+from GPT2w.GPT2w import GPT2w
+
 from gnss_lib_py.navdata.navdata import NavData
-from gnss_lib_py.utils.time_conversions import gps_datetime_to_gps_millis
+from gnss_lib_py.utils.time_conversions import gps_datetime_to_gps_millis, datetime_to_mjd
+from gnss_lib_py.utils import time_conversions
 
 class Tropo(NavData):
     """
@@ -64,7 +67,7 @@ class Tropo(NavData):
                             gps_millis_timestep = gps_datetime_to_gps_millis(curr_time)
 
                             gps_millis.append(gps_millis_timestep)
-                            ztd_m.append(float(data[2]))
+                            ztd_m.append(float(data[2])/1000)           # mm to meter
                             line = next(infile)         # read next line
                             if "-TROP/SOLUTION" in line:
                                 break
@@ -103,6 +106,31 @@ if __name__ == "__main__":
     input_trop_file = script_dir / "data" / "JPS1_SES_FIN_20160030000_01D_00U_KOKV_TRO"
 
     tropo_data = Tropo(input_trop_file)
+
+    # Initialize GPT2w Tropo model
+    gpt2w = GPT2w()
+
+
+    # Example: Vienna, August 2, 2012
+    dt = time_conversions.gps_millis_to_datetime(tropo_data["gps_millis"])
+    mjd = datetime_to_mjd(dt)
+
+    lat = tropo_data.station_lla[0]
+    lon = tropo_data.station_lla[1]
+    height = tropo_data.station_lla[2]
+
+    print("=" * 60)
+    print("GPT2w Tropospheric Parameters")
+    print("=" * 60)
+    print(f"Location: {lat}°N, {lon}°E, {height}m")
+    # print(f"Date: {dt}")
+    # print(f"MJD: {mjd:.1f}")
+    print("=" * 60)
+
+    result = gpt2w.compute(mjd, lat, lon, height)
+    modeled_T = result.zenith_total_delay_m
+
+    residual_GPT2w = tropo_data["ztd_m"] - modeled_T
 
     print("="*60)
     print(f"{' '*18} End of Tropo Analysis {' '*18}")
