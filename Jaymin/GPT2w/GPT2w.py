@@ -32,16 +32,23 @@ class GPT2wResult:
 class GPT2w:
     """GPT2w tropospheric model"""
 
-    def __init__(self, grid_file: str = "gpt2_1w.grd"):
+    def __init__(self, grid_file: Optional[str] = None):
         """
         Initialize GPT2w model by loading grid file.
 
         Parameters:
         -----------
-        grid_file : str
-            Path to gpt2_1wA.grd file
+        grid_file : str, optional
+            Path to gpt2_1wA.grd file. If None, looks for it in the same
+            directory as this Python file.
         """
         self.grid_loaded = False
+
+        # If no grid file specified, look in the same directory as this module
+        if grid_file is None:
+            module_dir = os.path.dirname(os.path.abspath(__file__))
+            grid_file = os.path.join(module_dir, "gpt2_1w.grd")
+
         self.grid_file = grid_file
 
         # Grid dimensions: 180 x 360 = 64800 points
