@@ -8,7 +8,7 @@ from datetime import datetime, timezone, timedelta
 import numpy as np
 from pathlib import Path
 
-from GPT2w.GPT2w import GPT2w
+from GPT2w import GPT2w
 
 from gnss_lib_py.navdata.navdata import NavData
 from gnss_lib_py.utils.time_conversions import gps_datetime_to_gps_millis, datetime_to_mjd
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     # Get the directory of the current script
     script_dir = Path(__file__).resolve().parent
 
-    input_trop_file = script_dir / "data" / "JPS1_SES_FIN_20160030000_01D_00U_KOKV_TRO"
+    input_trop_file = script_dir.parent / "data" / "JPS1_SES_FIN_20160030000_01D_00U_KOKV_TRO"
 
     tropo_data = Tropo(input_trop_file)
 
