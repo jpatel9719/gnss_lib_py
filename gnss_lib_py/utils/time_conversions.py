@@ -172,6 +172,37 @@ def datetime_to_tow(t_datetimes):
     tows = np.squeeze(np.array(tows))
     return gps_weeks, tows
 
+def datetime_to_mjd(t_datetimes):
+    """Convert Python datetime object to modified Julian date
+
+    Parameters
+    ----------
+    t_datetimes : datetime.datetime or array-like of datetime.datetime
+        Datetime object for Time of Clock, assumed to be in UTC time frame.
+
+    Returns
+    -------
+
+    mjd : float or np.ndarray
+        Modified Julian date [day]. Either `float` or `np.ndarray` with
+        `dtype = float`.
+
+    """
+    MJD_OFFSET = 2400000.5
+    JD_OFFSET = 1721424.5
+
+    # Normalize input to 1D numpy array
+    t_arr = np.atleast_1d(t_datetimes)
+
+    # Ensure UTC (vectorized)
+    t_arr = np.array([tzinfo_to_utc(t) for t in t_arr], dtype=object)
+
+    # Vectorized conversion
+    ordinal = np.array([t.toordinal() for t in t_arr], dtype=float)
+    mjd = ordinal + JD_OFFSET - MJD_OFFSET
+
+    # Return scalar if input was scalar
+    return mjd[0] if np.isscalar(t_datetimes) else mjd
 
 def tow_to_datetime(gps_weeks, tows):
     """Convert GPS week and time of week (seconds) to datetime.
